@@ -1,72 +1,72 @@
 # portfolio-watchdog
 
-Automatizované E2E testy pro [michalcapoun.cz](https://michalcapoun.cz). Spouštějí se po každém deployi portfolia a hlídají, že se nic nerozbilo.
+Automated E2E tests for [michalcapoun.cz](https://michalcapoun.cz). Triggered after every portfolio deployment to catch regressions.
 
 ## Stack
 
-- **[Playwright](https://playwright.dev)** + TypeScript — E2E testování
-- **[@axe-core/playwright](https://github.com/dequelabs/axe-core-npm)** — automatická kontrola přístupnosti (WCAG 2.0/2.1)
-- **GitHub Actions** — CI/CD, spouštění testů po každém deployi portfolia
+- **[Playwright](https://playwright.dev)** + TypeScript — E2E testing
+- **[@axe-core/playwright](https://github.com/dequelabs/axe-core-npm)** — automated accessibility checks (WCAG 2.0/2.1)
+- **GitHub Actions** — CI/CD, runs tests after every portfolio deploy
 
-## Co se testuje
+## What's tested
 
-| Soubor | Co pokrývá |
-|--------|------------|
-| `tests/smoke.spec.ts` | HTTP 200, načtení stránky, viditelnost sekcí, chybějící requesty, console errory |
-| `tests/accessibility.spec.ts` | axe-core WCAG analýza, alt texty obrázků, keyboard focus |
-| `tests/navigation.spec.ts` | Navbar, language switcher, theme toggle, carousel, flip karta, hamburger menu, external linky |
+| File | Coverage |
+|------|----------|
+| `tests/smoke.spec.ts` | HTTP 200, page load, section visibility, failed requests, console errors |
+| `tests/accessibility.spec.ts` | axe-core WCAG analysis, image alt texts, keyboard focus |
+| `tests/navigation.spec.ts` | Navbar, language switcher, theme toggle, carousel, flip card, hamburger menu, external links |
 
-## Browsery
+## Browsers
 
-Testy běží napříč:
+Tests run across:
 
 - Desktop: Chromium, Firefox, WebKit (Safari)
-- Mobil: Pixel 7 (Chrome), iPhone 14 (Safari)
+- Mobile: Pixel 7 (Chrome), iPhone 14 (Safari)
 
-## Spuštění
+## Running locally
 
 ```bash
-# Instalace závislostí
+# Install dependencies
 npm install
 npx playwright install --with-deps
 
-# Spustit všechny testy (headless)
+# Run all tests (headless)
 npm test
 
-# Spustit s viditelným browserem
+# Run with visible browser
 npm run test:headed
 
-# Interaktivní UI — vidíš timeline akcí, screenshoty, můžeš spouštět testy jednotlivě
+# Interactive UI — action timeline, screenshots, run tests individually
 npm run test:ui
 
-# Zobrazit HTML report z posledního runu
+# Show HTML report from last run
 npm run report
 ```
 
 ## CI/CD
 
-Watchdog se spouští automaticky třemi způsoby:
+Watchdog runs automatically in three ways:
 
-1. **Po každém deployi portfolia** — portfolio repo odešle `repository_dispatch` event po úspěšném nasazení na GitHub Pages
-2. **Každý den v 7:00 UTC** — fallback health check
-3. **Ručně** — Actions → Portfolio Watchdog → Run workflow
+1. **After every portfolio deploy** — portfolio repo sends a `repository_dispatch` event after a successful GitHub Pages deployment
+2. **Daily at 07:00 UTC** — fallback health check
+3. **Manually** — Actions → Portfolio Watchdog → Run workflow
 
-Výsledky a Playwright reporty jsou dostupné v záložce **Actions** na GitHubu, uchovávají se 14 dní.
+Results and Playwright reports are available in the **Actions** tab, retained for 14 days.
 
 ## Playwright MCP
 
-Pro lokální vývoj testů je nakonfigurovaný [Playwright MCP server](https://github.com/microsoft/playwright-mcp) (`.mcp.json`). Po otevření projektu v Claude Code může Claude přímo ovládat browser — navigovat, klikat, číst DOM — a pomáhat psát nebo debugovat testy.
+For local test development, a [Playwright MCP server](https://github.com/microsoft/playwright-mcp) is configured (`.mcp.json`). When the project is open in Claude Code, Claude can directly control the browser — navigate, click, read the DOM — to help write or debug tests.
 
-## Struktura
+## Structure
 
 ```
 tests/
-  smoke.spec.ts         # Základní health check
-  accessibility.spec.ts # Přístupnost
-  navigation.spec.ts    # Interaktivita a proklikání
-playwright.config.ts    # Konfigurace browserů a prostředí
+  smoke.spec.ts         # Basic health check
+  accessibility.spec.ts # Accessibility
+  navigation.spec.ts    # Interactivity and navigation
+playwright.config.ts    # Browser and environment config
 .github/
   workflows/
     watchdog.yml        # GitHub Actions workflow
-.mcp.json               # Playwright MCP pro Claude Code
+.mcp.json               # Playwright MCP for Claude Code
 ```

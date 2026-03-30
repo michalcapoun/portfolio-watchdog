@@ -40,3 +40,68 @@ jobs:
           name: playwright-report-${{ matrix.project }}
           path: playwright-report/
           retention-days: 14
+
+  report:
+    name: Report failures to portfolio
+    needs: [test]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create or update watchdog issue
+        env:
+          GH_TOKEN: ${{ secrets.PORTFOLIO_TOKEN }}
+        run: |
+          gh label create "watchdog" \
+            --repo michalcapoun/portfolio \
+            --color "d73a4a" \
+            --description "Automated watchdog test failure" \
+            2>/dev/null || true
+
+          EXISTING=$(gh issue list \
+            --repo michalcapoun/portfolio \
+            --label "watchdog" \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          DATE=$(date -u '+%Y-%m-%d %H:%M UTC')
+
+          BODY="**Watchdog run:** ${RUN_URL}
+          **Triggered by:** ${{ github.event_name }}
+          **Date:** ${DATE}"
+
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" \
+              --repo michalcapoun/portfolio \
+              --body "$BODY"
+          else
+            gh issue create \
+              --repo michalcapoun/portfolio \
+              --title "Watchdog: test failures detected" \
+              --label "watchdog" \
+              --body "$BODY"
+          fi
+
+  close-issue:
+    name: Close watchdog issue on success
+    needs: [test]
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issue if all tests pass
+        env:
+          GH_TOKEN: ${{ secrets.PORTFOLIO_TOKEN }}
+        run: |
+          EXISTING=$(gh issue list \
+            --repo michalcapoun/portfolio \
+            --label "watchdog" \
+            --state open \
+            --json number \
+            --jq '.[0].number')
+
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" \
+              --repo michalcapoun/portfolio \
+              --comment "All watchdog tests passing — closing."
+          fi
