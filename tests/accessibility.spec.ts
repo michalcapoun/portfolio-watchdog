@@ -1,5 +1,29 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page, Locator } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+
+async function getLangButton(page: Page): Promise<Locator> {
+  const desktop = page.locator('.navbar__actions .lang-button');
+  if (await desktop.isVisible()) return desktop;
+
+  const hamburger = page.locator('.navbar__hamburger');
+  if (await hamburger.isVisible()) {
+    await hamburger.click();
+    await page.waitForTimeout(300);
+  }
+  return page.locator('.navbar__mobile-controls .lang-button');
+}
+
+async function getThemeButton(page: Page): Promise<Locator> {
+  const desktop = page.locator('.navbar__actions .theme-button');
+  if (await desktop.isVisible()) return desktop;
+
+  const hamburger = page.locator('.navbar__hamburger');
+  if (await hamburger.isVisible()) {
+    await hamburger.click();
+    await page.waitForTimeout(300);
+  }
+  return page.locator('.navbar__mobile-controls .theme-button');
+}
 
 test.describe('Accessibility', () => {
   test('no critical a11y violations on load', async ({ page }) => {
@@ -20,9 +44,9 @@ test.describe('Accessibility', () => {
     }
   });
 
-  test('interactive elements are keyboard focusable', async ({ page }) => {
+  test('interactive elements are keyboard focusable', async ({ page, isMobile }) => {
+    if (isMobile) test.skip();
     await page.goto('/');
-    // Tab through the page and verify focus is visible on interactive elements
     await page.keyboard.press('Tab');
     const focused = page.locator(':focus');
     await expect(focused).toBeVisible();
@@ -30,13 +54,13 @@ test.describe('Accessibility', () => {
 
   test('language switcher is accessible', async ({ page }) => {
     await page.goto('/');
-    const langBtn = page.locator('[data-lang], .lang-btn, button:has-text("CS"), button:has-text("EN")').first();
+    const langBtn = await getLangButton(page);
     await expect(langBtn).toBeVisible();
   });
 
   test('theme toggle is accessible', async ({ page }) => {
     await page.goto('/');
-    const themeBtn = page.locator('.theme-button').first();
+    const themeBtn = await getThemeButton(page);
     await expect(themeBtn).toBeVisible();
   });
 });

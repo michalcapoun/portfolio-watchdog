@@ -1,4 +1,30 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page, Locator } from '@playwright/test';
+
+/** Vrátí viditelný lang button — desktop nebo mobile (po otevření hamburger menu). */
+async function getLangButton(page: Page): Promise<Locator> {
+  const desktop = page.locator('.navbar__actions .lang-button');
+  if (await desktop.isVisible()) return desktop;
+
+  const hamburger = page.locator('.navbar__hamburger');
+  if (await hamburger.isVisible()) {
+    await hamburger.click();
+    await page.waitForTimeout(300);
+  }
+  return page.locator('.navbar__mobile-controls .lang-button');
+}
+
+/** Vrátí viditelný theme button — desktop nebo mobile (po otevření hamburger menu). */
+async function getThemeButton(page: Page): Promise<Locator> {
+  const desktop = page.locator('.navbar__actions .theme-button');
+  if (await desktop.isVisible()) return desktop;
+
+  const hamburger = page.locator('.navbar__hamburger');
+  if (await hamburger.isVisible()) {
+    await hamburger.click();
+    await page.waitForTimeout(300);
+  }
+  return page.locator('.navbar__mobile-controls .theme-button');
+}
 
 test.describe('Navigation & interactivity', () => {
   test.beforeEach(async ({ page }) => {
@@ -24,26 +50,18 @@ test.describe('Navigation & interactivity', () => {
 
   // --- Language switcher ---
   test('language switcher toggles content language', async ({ page }) => {
-    // Find and click the non-active language button
-    const langBtn = page.locator('button:has-text("EN"), button:has-text("CS")').first();
-    const initialText = await page.locator('h1, h2').first().innerText();
+    const langBtn = await getLangButton(page);
     await langBtn.click();
     await page.waitForTimeout(300);
-    const newText = await page.locator('h1, h2').first().innerText();
-    // Content should change after language switch (or at least not error out)
-    // We just verify the page is still functional
     await expect(page.locator('#hero')).toBeVisible();
-    // If we have both CS and EN content, text may or may not change — just ensure no crash
-    expect(typeof newText).toBe('string');
   });
 
   // --- Dark / Light theme ---
   test('theme toggle switches theme', async ({ page }) => {
-    // Theme is applied as "dark-theme" class on body
     const body = page.locator('body');
     const hasDarkBefore = await body.evaluate((el) => el.classList.contains('dark-theme'));
 
-    const themeBtn = page.locator('.theme-button').first();
+    const themeBtn = await getThemeButton(page);
     await themeBtn.click();
     await page.waitForTimeout(300);
 
@@ -53,7 +71,7 @@ test.describe('Navigation & interactivity', () => {
 
   // --- Project carousel ---
   test('project carousel next button works', async ({ page }) => {
-    const nextBtn = page.locator('.carousel__btn--next, [aria-label*="next" i], [aria-label*="další" i]').first();
+    const nextBtn = page.locator('[aria-label*="další" i], [aria-label*="next" i]').first();
     if (await nextBtn.isVisible()) {
       await nextBtn.click();
       await page.waitForTimeout(400);
@@ -62,7 +80,7 @@ test.describe('Navigation & interactivity', () => {
   });
 
   test('project carousel prev button works', async ({ page }) => {
-    const prevBtn = page.locator('.carousel__btn--prev, [aria-label*="prev" i], [aria-label*="předchozí" i]').first();
+    const prevBtn = page.locator('[aria-label*="předchozí" i], [aria-label*="prev" i]').first();
     if (await prevBtn.isVisible()) {
       await prevBtn.click();
       await page.waitForTimeout(400);
@@ -76,7 +94,6 @@ test.describe('Navigation & interactivity', () => {
     if (await card.isVisible()) {
       await card.click();
       await page.waitForTimeout(500);
-      // Back side should become visible after flip
       const backSide = page.locator('.card__back, .contact-card__back').first();
       if (await backSide.count() > 0) {
         await expect(backSide).toBeVisible();
@@ -87,13 +104,12 @@ test.describe('Navigation & interactivity', () => {
   // --- Mobile hamburger menu ---
   test('mobile hamburger opens nav menu', async ({ page, isMobile }) => {
     if (!isMobile) test.skip();
-    const hamburger = page.locator('.hamburger, [aria-label*="menu" i], .nav__hamburger').first();
+    const hamburger = page.locator('.navbar__hamburger');
     await expect(hamburger).toBeVisible();
     await hamburger.click();
     await page.waitForTimeout(300);
-    const mobileMenu = page.locator('.nav__menu--open, .mobile-menu, nav.open').first();
-    // At minimum verify no crash and hamburger is still visible
-    await expect(page.locator('#hero')).toBeVisible();
+    const mobileMenu = page.locator('.navbar__mobile-menu');
+    await expect(mobileMenu).toBeVisible();
   });
 
   // --- External links open correctly ---
