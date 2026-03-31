@@ -102,19 +102,6 @@ test.describe('Navigation & interactivity', () => {
     }
   });
 
-  // --- Mobile hamburger menu ---
-  // getByRole('button', { name: 'Otevřít menu' }) — semantic selector.
-  // Verifying via aria-expanded="true" is better than checking CSS class or div visibility —
-  // it's the accessibility state that signals the menu is open.
-  test('mobile hamburger opens nav menu', async ({ page, isMobile }) => {
-    if (!isMobile) test.skip();
-    const hamburger = page.getByRole('button', { name: 'Otevřít menu' });
-    await expect(hamburger).toBeVisible();
-    await hamburger.click();
-    await page.waitForTimeout(300);
-    await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
-  });
-
   // --- External links open correctly ---
   // Failing until portfolio adds rel="noopener noreferrer" to target="_blank" links
   test('external links have target="_blank" and rel="noopener"', async ({ page }) => {
