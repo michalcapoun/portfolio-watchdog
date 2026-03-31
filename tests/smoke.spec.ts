@@ -12,6 +12,11 @@ test.describe('Smoke – page load', () => {
     await expect(page.locator('#hero')).toBeVisible();
   });
 
+  test('home section is visible', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#home')).toBeVisible();
+  });
+
   test('projects section is visible', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('#projects')).toBeVisible();
